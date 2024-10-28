@@ -1,6 +1,6 @@
 const express = require('express');
 const zod = require('zod');
-const {User} = require('../db');
+const {User, Account} = require('../db');
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = require("../config");
@@ -11,7 +11,7 @@ const signupSchema = zod.object({
     password: zod.string(),
     firstName: zod.string(),
     lastName: zod.string() 
-});
+}); 
 
 
 
@@ -23,7 +23,7 @@ router.post("/signup", async (req,res) => {
         return res.status(411).json({
             message: "Email already taken/ incorrect inputs"
         });
-    }
+    } 
 
     const existingUser = await User.findOne({
         username: body.username
@@ -39,10 +39,15 @@ router.post("/signup", async (req,res) => {
     const user = await User.create(body);
     const userId = user._id;
 
+    await Account.create({
+        userId,
+        balance: 1+ Math.random() * 10000
+    })
+
     const token = jwt.sign({
         userId
     }, JWT_SECRET);
-    console.log(token);
+    //console.log(token);
     res.json({
         message: "User created successfully",
         token: token
@@ -68,7 +73,7 @@ router.post("/signin", async(req,res) => {
         });
     }
 
-    const existingUser = User.findOne({
+    const existingUser = await User.findOne({
         username: body.username
     });
 
